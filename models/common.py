@@ -1087,7 +1087,28 @@ class Proto(nn.Module):
         """Performs a forward pass using convolutional layers and upsampling on input tensor `x`."""
         return self.cv3(self.cv2(self.upsample(self.cv1(x))))
 
+#****** Attention Modules ******
 
+# Squeeze and Excitation
+class SELayer(nn.Module):
+    def __init__(self, c1, r=16):
+        super(SELayer, self).__init__()
+        self.avgpool = nn.AdaptiveAvgPool2d(1)
+        self.l1 = nn.Linear(c1, c1 // r, bias=False)
+        self.relu = nn.ReLU(inplace=True)
+        self.l2 = nn.Linear(c1 // r, c1, bias=False)
+        self.sig = nn.Sigmoid()
+
+    def forward(self, x):
+        b, c, _, _ = x.size()
+        y = self.avgpool(x).view(b, c)
+        y = self.l1(y)
+        y = self.relu(y)
+        y = self.l2(y)
+        y = self.sig(y)
+        y = y.view(b, c, 1, 1)
+        return x * y.expand_as(x)
+        
 class Classify(nn.Module):
     """YOLOv5 classification head with convolution, pooling, and dropout layers for channel transformation."""
 
