@@ -420,6 +420,7 @@ def parse_model(d, ch):
             nn.ConvTranspose2d,
             DWConvTranspose2d,
             C3x,
+            SELayer,
         }:
             c1, c2 = ch[f], args[0]
             if c2 != no:  # if not output
@@ -431,6 +432,10 @@ def parse_model(d, ch):
                 n = 1
         elif m is nn.BatchNorm2d:
             args = [ch[f]]
+        elif m is SELayer:
+            channel, re = args[0], args[1]
+            channel = make_divisible(channel * gw, 8) if channel != no else channel
+            args = [channel, re]
         elif m is Concat:
             c2 = sum(ch[x] for x in f)
         # TODO: channel, gw, gd
